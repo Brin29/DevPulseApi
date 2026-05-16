@@ -1,0 +1,19 @@
+services:
+  api:
+    image: node:22-alpine
+    environment:
+      MONGO_URI: mongodb://mongo:27017/devpulse
+    depends_on:
+      - mongo
+    build: .
+    ports:
+      - "3000:3000"
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data: 

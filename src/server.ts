@@ -10,7 +10,7 @@ const start = async () => {
     await connectDatabase()
     await registerSwagger(fastify)
     await fastify.register(authRoutes)
-    await fastify.listen({ port: 3000, host: "0.0.0.0" })
+    await fastify.listen({ port: Number(process.env.PORT) || 3000, host: "0.0.0.0" })
     console.log('Servidor corriendo en http://localhost:3000')
     console.log('Documentación Swagger en http://localhost:3000/docs')
   } catch (err) {

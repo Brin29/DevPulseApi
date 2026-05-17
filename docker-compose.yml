@@ -2,7 +2,7 @@ services:
   api:
     image: node:22-alpine
     environment:
-      MONGO_URI: mongodb://mongo:xfAWpVkFWgKDpfilSwucJkvHvpVyzVCk@mongodb.railway.internal:27017
+      MONGO_URI: mongodb://mongo:xfAWpVkFWgKDpfilSwucJkvHvpVyzVCk@autorack.proxy.rlwy.net:30144
     depends_on:
       - mongo
     build: .

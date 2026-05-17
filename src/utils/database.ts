@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const mongoUri = process.env.MONGO_URL || process.env.MONGO_URI;
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost/devpulse';
 
 export async function connectDatabase(): Promise<void> {
   try {

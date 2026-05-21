@@ -1,11 +1,10 @@
 services:
   api:
-    image: node:22-alpine
     env_file:
       - .env.dev
     depends_on:
       - mongo
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.dev
     ports:
@@ -21,4 +20,4 @@ services:
       - mongo_data:/data/db
 
 volumes:
-  mongo_data: 
+  mongo_data:

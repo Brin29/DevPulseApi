@@ -1,124 +1,261 @@
-import { FastifyInstance } from 'fastify';
-import { register, login, getProfile } from '../controllers/auth.controller';
-import { authenticate } from '../middlewares/auth.middleware';
+import { FastifyInstance } from "fastify";
+import {
+  register,
+  login,
+  getProfile,
+  codeGenerate,
+  verifyCode,
+} from "../controllers/auth.controller";
+import { authenticate, verifyVerificationToken } from "../middlewares/auth.middleware";
+import { RegisterModel } from "../models/auth.model";
+import { Request } from "../models/request.model";
 
 const registerSchema = {
-  description: 'Registrar un nuevo usuario',
-  tags: ['Auth'],
+  description: "Registrar un nuevo usuario",
+  tags: ["Auth"],
+  security: [{ bearerAuth: [] }],
   body: {
-    type: 'object',
-    required: ['firstName', 'lastName', 'email', 'password'],
+    type: "object",
+    required: ["data"],
     properties: {
-      firstName: { type: 'string', description: 'Nombre del usuario' },
-      lastName: { type: 'string', description: 'Apellido del usuario' },
-      email: { type: 'string', format: 'email', description: 'Correo electrónico' },
-      password: { type: 'string', minLength: 6, description: 'Contraseña (mín. 6 caracteres)' },
-    },
-  },
-  response: {
-    201: {
-      description: 'Usuario registrado exitosamente',
-      type: 'object',
-      properties: {
-        message: { type: 'string' },
-        access_token: { type: 'string' },
-        refresh_token: { type: 'string' },
-        user: {
-          type: 'object',
-          properties: {
-            id: { type: 'string' },
-            firstName: { type: 'string' },
-            lastName: { type: 'string' },
-            email: { type: 'string' },
-            role: { type: 'string' },
+      data: {
+        type: "object",
+        required: ["firstName", "lastName", "password"],
+        properties: {
+          firstName: { type: "string", description: "Nombre del usuario" },
+          lastName: { type: "string", description: "Apellido del usuario" },
+          password: {
+            type: "string",
+            minLength: 6,
+            description: "Contraseña (mín. 6 caracteres)",
           },
         },
       },
     },
-    400: {
-      description: 'Error de validación',
-      type: 'object',
+  },
+  response: {
+    201: {
+      description: "Usuario registrado exitosamente",
+      type: "object",
       properties: {
-        error: { type: 'string' },
+        message: { type: "string" },
+      },
+    },
+    400: {
+      description: "Error de validación",
+      type: "object",
+      properties: {
+        error: { type: "string" },
       },
     },
   },
 };
 
 const loginSchema = {
-  description: 'Iniciar sesión',
-  tags: ['Auth'],
+  description: "Iniciar sesión",
+  tags: ["Auth"],
   body: {
-    type: 'object',
-    required: ['email', 'password'],
+    type: "object",
+    required: ["data"],
     properties: {
-      email: { type: 'string', format: 'email', description: 'Correo electrónico' },
-      password: { type: 'string', description: 'Contraseña' },
+      data: {
+        type: "object",
+        required: ["email", "password"],
+        properties: {
+          email: {
+            type: "string",
+            format: "email",
+            description: "Correo electrónico",
+          },
+          password: { type: "string", description: "Contraseña" },
+        },
+      },
     },
   },
   response: {
     200: {
-      description: 'Inicio de sesión exitoso',
-      type: 'object',
+      description: "Inicio de sesión exitoso",
+      type: "object",
       properties: {
-        message: { type: 'string' },
-        access_token: { type: 'string' },
-        refresh_token: { type: 'string' },
+        message: { type: "string" },
+        access_token: { type: "string" },
+        refresh_token: { type: "string" },
         user: {
-          type: 'object',
+          type: "object",
           properties: {
-            id: { type: 'string' },
-            firstName: { type: 'string' },
-            lastName: { type: 'string' },
-            email: { type: 'string' },
-            role: { type: 'string' },
+            id: { type: "string" },
+            firstName: { type: "string" },
+            lastName: { type: "string" },
+            email: { type: "string" },
+            role: { type: "string" },
           },
         },
       },
     },
     401: {
-      description: 'Credenciales inválidas',
-      type: 'object',
+      description: "Credenciales inválidas",
+      type: "object",
       properties: {
-        error: { type: 'string' },
+        error: { type: "string" },
       },
     },
   },
 };
 
 const profileSchema = {
-  description: 'Obtener perfil del usuario autenticado',
-  tags: ['Auth'],
+  description: "Obtener perfil del usuario autenticado",
+  tags: ["Auth"],
   security: [{ bearerAuth: [] }],
   response: {
     200: {
-      description: 'Perfil del usuario',
-      type: 'object',
+      description: "Perfil del usuario",
+      type: "object",
       properties: {
         user: {
-          type: 'object',
+          type: "object",
           properties: {
-            id: { type: 'string' },
-            firstName: { type: 'string' },
-            lastName: { type: 'string' },
-            email: { type: 'string' },
-            role: { type: 'string' },
+            id: { type: "string" },
+            firstName: { type: "string" },
+            lastName: { type: "string" },
+            email: { type: "string" },
+            role: { type: "string" },
           },
         },
       },
     },
     401: {
-      description: 'Token inválido o no proporcionado',
-      type: 'object',
+      description: "Token inválido o no proporcionado",
+      type: "object",
       properties: {
-        error: { type: 'string' },
+        error: { type: "string" },
+      },
+    },
+  },
+};
+
+const requestCodeSchema = {
+  description: "Enviar código de verificación al correo",
+  tags: ["Auth"],
+  body: {
+    type: "object",
+    required: ["data"],
+    properties: {
+      data: {
+        type: "object",
+        required: ["email"],
+        properties: {
+          email: {
+            type: "string",
+          },
+        },
+      },
+    },
+  },
+  response: {
+    200: {
+      description: "Código enviado exitosamente",
+      type: "object",
+      properties: {
+        message: {
+          type: "string",
+          example: "Verification code sent successfully",
+        },
+        code: {
+          type: "string",
+        },
+      },
+    },
+    400: {
+      description: "El email ya está registrado",
+      type: "object",
+      properties: {
+        error: {
+          type: "string",
+        },
+      },
+    },
+    // 409: {
+    //   description: "El email ya está registrado",
+    //   type: "object",
+    //   properties: {
+    //     error: {
+    //       type: "string",
+    //       example: "Email already exists",
+    //     },
+    //   },
+    // },
+    // 429: {
+    //   description: "Demasiadas solicitudes",
+    //   type: "object",
+    //   properties: {
+    //     error: {
+    //       type: "string",
+    //       example: "Too many requests",
+    //     },
+    //   },
+    // },
+  },
+};
+
+const verifyCodeSchema = {
+  description: "Verificar código de 6 dígitos",
+  tags: ["Auth"],
+  body: {
+    type: "object",
+    required: ["data"],
+    properties: {
+      data: {
+        type: "object",
+        required: ["email", "code"],
+        properties: {
+          email: {
+            type: "string",
+          },
+          code: {
+            type: "string",
+          },
+        },
+      },
+    },
+  },
+  response: {
+    200: {
+      description: "Codigo verificado exitosamente",
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        verification_token: { type: "string" },
+      },
+    },
+    400: {
+      description: "Error de validación o token inválido",
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+    401: {
+      description: "Credenciales inválidas",
+      type: "object",
+      properties: {
+        error: { type: "string" },
       },
     },
   },
 };
 
 export default async function authRoutes(fastify: FastifyInstance) {
-  fastify.post('/auth/register', { schema: registerSchema }, register);
-  fastify.post('/auth/login', { schema: loginSchema }, login);
-  fastify.get('/auth/profile', { schema: profileSchema, preHandler: authenticate }, getProfile);
+  fastify.post<{ Body: Request<RegisterModel> }>("/auth/register", { preHandler: verifyVerificationToken, schema: registerSchema }, register);
+  fastify.post("/auth/login", { schema: loginSchema }, login);
+  fastify.post(
+    "/auth/request-code",
+    { schema: requestCodeSchema },
+    codeGenerate,
+  );
+  fastify.post("/auth/verify-code", { schema: verifyCodeSchema }, verifyCode);
+  fastify.get(
+    "/auth/profile",
+    { schema: profileSchema, preHandler: authenticate },
+    getProfile,
+  );
 }

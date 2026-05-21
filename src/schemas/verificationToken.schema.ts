@@ -30,7 +30,6 @@ const VerificationTokenSchema = new Schema<
     expiresAt: {
       type: Date,
       required: true,
-      expires: 0,
     },
   },
   {

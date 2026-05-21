@@ -5,6 +5,7 @@ import {
   getProfile,
   codeGenerate,
   verifyCode,
+  verifyMagicToken,
 } from "../controllers/auth.controller";
 import { authenticate, verifyVerificationToken } from "../middlewares/auth.middleware";
 import { RegisterModel } from "../models/auth.model";
@@ -244,6 +245,62 @@ const verifyCodeSchema = {
   },
 };
 
+const verifyMagicTokenSchema = {
+  description: "Verificar token mágico para acceso directo",
+  tags: ["Auth"],
+  body: {
+    type: "object",
+    required: ["data"],
+    properties: {
+      data: {
+        type: "object",
+        required: ["magic_token"],
+        properties: {
+          magic_token: {
+            type: "string",
+            description: "Token mágico enviado por correo para acceso directo",
+          },
+        },
+      },
+    },
+  },
+  response: {
+    200: {
+      description: "Acceso exitoso con token mágico",
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        access_token: { type: "string" },
+        refresh_token: { type: "string" },
+        user: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            firstName: { type: "string" },
+            lastName: { type: "string" },
+            email: { type: "string" },
+            role: { type: "string" },
+          },
+        },
+      },
+    },
+    400: {
+      description: "Token mágico inválido o expirado",
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+    401: {
+      description: "Credenciales inválidas",
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+  },
+};
+
 export default async function authRoutes(fastify: FastifyInstance) {
   fastify.post<{ Body: Request<RegisterModel> }>("/auth/register", { preHandler: verifyVerificationToken, schema: registerSchema }, register);
   fastify.post("/auth/login", { schema: loginSchema }, login);
@@ -253,6 +310,7 @@ export default async function authRoutes(fastify: FastifyInstance) {
     codeGenerate,
   );
   fastify.post("/auth/verify-code", { schema: verifyCodeSchema }, verifyCode);
+  fastify.post("/auth/verify-magic-token", { schema: verifyMagicTokenSchema }, verifyMagicToken);
   fastify.get(
     "/auth/profile",
     { schema: profileSchema, preHandler: authenticate },

@@ -4,6 +4,7 @@ import User from "../schemas/user.schema";
 import {
   RegisterModel,
   LoginModel,
+  
   CodeModel,
   VerifyCodeRequest,
 } from "../models/auth.model";
@@ -82,7 +83,13 @@ export async function verifyCode(
 
   if (!verification) {
     return reply.status(400).send({
-      error: "Código expirado o inexistente",
+      error: "Código no existe",
+    });
+  }
+
+  if (verification.expiresAt < new Date()) {
+    return reply.status(400).send({
+      error: "Código expirado",
     });
   }
 
@@ -124,7 +131,32 @@ export async function register(
   const existingUser = await User.findOne({ email: verification.email });
 
   if (existingUser) {
-    return reply.status(400).send({ error: "El email ya está registrado" });
+    // If user is verified, send a magic link for login
+    if (existingUser.isVerified) {
+      const magicToken = jwt.sign(
+        { id: existingUser._id, email: existingUser.email },
+        JWT_SECRET,
+        { expiresIn: "15m" }
+      );
+
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+      const magicLink = `${frontendUrl}/login?magic_token=${magicToken}`;
+
+      await EmailService.sendMagicLinkEmail(
+        existingUser.email,
+        magicLink,
+        `${existingUser.firstName} ${existingUser.lastName}`
+      );
+
+      return reply.status(200).send({
+        message: "Se ha enviado un enlace de acceso a su correo electrónico",
+      });
+    } else {
+      // User exists but not verified
+      return reply.status(400).send({
+        error: "El email ya está registrado pero no verificado. Por favor verifique su correo primero.",
+      });
+    }
   }
 
   console.log("Mostrar verificacion:")
@@ -206,4 +238,44 @@ export async function getProfile(request: FastifyRequest, reply: FastifyReply) {
       role: user.role,
     },
   });
+}
+
+export async function verifyMagicToken(
+  request: FastifyRequest<{ Body: { magic_token: string } }>,
+  reply: FastifyReply,
+) {
+  const { magic_token } = request.body;
+
+  try {
+    const decoded = jwt.verify(magic_token, JWT_SECRET) as {
+      id: string;
+      email: string;
+    };
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return reply.status(401).send({ error: "Usuario no encontrado" });
+    }
+
+    // Verify that the email in the token matches the user's email
+    if (user.email !== decoded.email) {
+      return reply.status(401).send({ error: "Token inválido" });
+    }
+
+    const tokens = generateTokens(user);
+
+    return reply.send({
+      message: "Acceso exitoso con token mágico",
+      ...tokens,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    return reply.status(401).send({ error: "Token mágico inválido o expirado" });
+  }
 }

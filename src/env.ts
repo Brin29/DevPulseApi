@@ -8,4 +8,5 @@ export const env = {
   MAIL_PORT: Number(process.env.MAIL_PORT),
   MAIL_USER: process.env.MAIL_USER!,
   MAIL_PASSWORD: process.env.MAIL_PASSWORD!,
+  FRONTEND_URL: process.env.FRONTEND_URL,
 };

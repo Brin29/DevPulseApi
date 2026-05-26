@@ -32,10 +32,10 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
     required: true,
     select: false,
   },
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
+  // isVerified: {
+  //   type: Boolean,
+  //   default: false,
+  // },
 });
 
 UserSchema.pre<HydratedDocument<IUser, IUserMethods>>('save', async function () {

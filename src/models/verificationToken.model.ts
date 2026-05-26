@@ -1,6 +1,7 @@
 export interface IVerificationToken {
   email: string;
   code: string;
+  attempts: number;
   expiresAt: Date;
 }
 

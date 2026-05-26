@@ -27,6 +27,10 @@ const VerificationTokenSchema = new Schema<
       required: true,
       select: false,
     },
+    attempts: {
+      type: Number,
+      default: 0,
+    },
     expiresAt: {
       type: Date,
       required: true,
@@ -42,12 +46,14 @@ VerificationTokenSchema.pre("save", async function () {
   this.code = await bcrypt.hash(this.code, 10);
 });
 
-VerificationTokenSchema.methods.compareCode = async function (code: string): Promise<boolean> {
+VerificationTokenSchema.methods.compareCode = async function (
+  code: string,
+): Promise<boolean> {
   return bcrypt.compare(code, this.code);
 };
 
 const VerificationToken = mongoose.model<
-  IVerificationToken, 
+  IVerificationToken,
   VerificationTokenModel
 >("VerificationToken", VerificationTokenSchema);
 

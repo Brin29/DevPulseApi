@@ -1,10 +1,18 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import { connectDatabase } from "./utils/database";
-import { registerSwagger } from "./utils/swagger";
+import { connectDatabase } from "./utils/database.utils";
+import { registerSwagger } from "./utils/swagger.utils";
 import authRoutes from "./routes/auth.routes";
+import teamRoutes from "./routes/team.routes";
 
 const fastify = Fastify({ logger: true });
+
+fastify.setErrorHandler((error: any, _, reply) => {
+  const status = error.status ?? error.statusCode ?? 500;
+  const message = error.message ?? "Error interno del servidor";
+
+  reply.status(status).send({ error: message });
+});
 
 const start = async () => {
   try {
@@ -13,8 +21,10 @@ const start = async () => {
     await fastify.register(cors, {
       origin: ["http://localhost:5173", "https://dev-pulse-front.vercel.app"],
       credentials: true,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     });
     await fastify.register(authRoutes);
+    await fastify.register(teamRoutes);
     await fastify.listen({
       port: Number(process.env.PORT) || 3000,
       host: "0.0.0.0",

@@ -1,10 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import jwt from "jsonwebtoken";
 import User from "../schemas/user.schema";
-import VerificationToken from "../schemas/verificationToken.schema";
-import { createHash, randomBytes, randomInt } from "node:crypto";
-import { EmailService } from "../utils/email.utils";
-import MagicLink from "../schemas/magicLink.schema";
 import {
   RegisterRequest,
   LoginRequest,

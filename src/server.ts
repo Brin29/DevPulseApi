@@ -4,6 +4,7 @@ import { connectDatabase } from "./utils/database.utils";
 import { registerSwagger } from "./utils/swagger.utils";
 import authRoutes from "./routes/auth.routes";
 import teamRoutes from "./routes/team.routes";
+import taskRoutes from "./routes/task.routes";
 
 const fastify = Fastify({ logger: true });
 
@@ -25,6 +26,7 @@ const start = async () => {
     });
     await fastify.register(authRoutes);
     await fastify.register(teamRoutes);
+    await fastify.register(taskRoutes);
     await fastify.listen({
       port: Number(process.env.PORT) || 3000,
       host: "0.0.0.0",

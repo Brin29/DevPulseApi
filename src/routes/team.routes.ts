@@ -8,7 +8,9 @@ import {
   invite,
   accept,
   listInvitations,
+  listMembers,
   cancel,
+  deleteInvt,
 } from "../controllers/team.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 import {
@@ -17,7 +19,43 @@ import {
   GetTeamRequest,
   InviteMemberRequest,
   AcceptInvitationRequest,
+  CancelInvitationRequest,
+  GetTeamInvitationsRequest,
 } from "../types/team.types";
+import { GetTeamMembersRequest } from "../types/team.types";
+
+const listMembersSchema = {
+  description: "Listar miembros de un equipo",
+  tags: ["Teams"],
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: "object",
+    required: ["id"],
+    properties: {
+      id: { type: "string", description: "ID del equipo" },
+    },
+  },
+  response: {
+    200: {
+      description: "Lista de miembros del equipo",
+      type: "object",
+      properties: {
+        members: {
+          type: "array",
+        },
+      },
+    },
+    403: {
+      description: "No autorizado",
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+  },
+};
+
+import { deleteInvitation } from "../services/team.service";
 
 const createTeamSchema = {
   description: "Crear un nuevo equipo",
@@ -270,6 +308,36 @@ const acceptInvitationSchema = {
   },
 };
 
+const cancelInvitationSchema = {
+  description: "Cancelar una invitación a un equipo",
+  tags: ["Teams"],
+  security: [{ bearerAuth: [] }],
+  params: {
+    type: "object",
+    required: ["token"],
+    properties: {
+      token: { type: "string", description: "Token de invitación" },
+    },
+  },
+  response: {
+    200: {
+      description: "Invitación cancelada exitosamente",
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        teamId: { type: "string" },
+      },
+    },
+    410: {
+      description: "Invitación expirada",
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+  },
+};
+
 const listInvitationsSchema = {
   description: "Listar invitaciones de un equipo",
   tags: ["Teams"],
@@ -281,18 +349,29 @@ const listInvitationsSchema = {
       id: { type: "string", description: "ID del equipo" },
     },
   },
+  querystring: {
+    type: "object",
+    properties: {
+      page: { type: "string", description: "Número de página", default: "1" },
+      limit: { type: "string", description: "Elementos por página", default: "10" },
+    },
+  },
   response: {
     200: {
       description: "Lista de invitaciones",
       type: "object",
       properties: {
         invitations: { type: "array" },
+        total: { type: "number" },
+        page: { type: "number" },
+        limit: { type: "number" },
+        totalPages: { type: "number" },
       },
     },
   },
 };
 
-const cancelInvitationSchema = {
+const deleteInvitationSchema = {
   description: "Cancelar una invitación",
   tags: ["Teams"],
   security: [{ bearerAuth: [] }],
@@ -346,19 +425,31 @@ export default async function teamRoutes(fastify: FastifyInstance) {
     { preHandler: authenticate, schema: inviteMemberSchema },
     invite,
   );
-  fastify.get<GetTeamRequest>(
+  fastify.get<GetTeamInvitationsRequest>(
     "/teams/:id/invitations",
     { preHandler: authenticate, schema: listInvitationsSchema },
     listInvitations,
+  );
+  fastify.get<GetTeamMembersRequest>(
+    "/teams/:id/members",
+    { preHandler: authenticate, schema: listMembersSchema },
+    listMembers,
   );
   fastify.post<AcceptInvitationRequest>(
     "/teams/invitations/:token/accept",
     { preHandler: authenticate, schema: acceptInvitationSchema },
     accept,
   );
+
+  fastify.patch<CancelInvitationRequest>(
+     "/teams/invitations/:token/cancel",
+     { preHandler: authenticate, schema: cancelInvitationSchema },
+     cancel,
+  )
+
   fastify.delete<{ Params: { id: string } }>(
     "/teams/invitations/:id",
-    { preHandler: authenticate, schema: cancelInvitationSchema },
-    cancel,
+    { preHandler: authenticate, schema: deleteInvitationSchema },
+    deleteInvt,
   );
 }

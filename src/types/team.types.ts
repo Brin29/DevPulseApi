@@ -21,3 +21,16 @@ export interface InviteMemberRequest {
 export interface AcceptInvitationRequest {
   Params: { token: string };
 }
+
+export interface CancelInvitationRequest {
+  Params: { token: string };
+}
+
+export interface GetTeamInvitationsRequest {
+  Params: { id: string };
+  Querystring: { page?: string; limit?: string };
+}
+
+export interface GetTeamMembersRequest {
+  Params: { id: string };
+}

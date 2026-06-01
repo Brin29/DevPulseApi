@@ -23,7 +23,7 @@ export async function createTeam(
   await OrganizationMember.create({
     teamId: team._id,
     userId: ownerId,
-    role: "ADMIN",
+    role: "Admin",
   });
 
   return team;
@@ -59,8 +59,9 @@ export async function getTeamById(teamId: string, userId: string) {
     teamId,
     userId,
   });
-  if (!isMember) throw { status: 403, message: "No eres miembro de este equipo" };
-  
+  if (!isMember)
+    throw { status: 403, message: "No eres miembro de este equipo" };
+
   return team;
 }
 
@@ -73,7 +74,10 @@ export async function updateTeam(
   if (!team) throw { status: 404, message: "Equipo no encontrado" };
 
   if (team.ownerId.toString() !== userId) {
-    throw { status: 403, message: "Solo el propietario puede actualizar el equipo" };
+    throw {
+      status: 403,
+      message: "Solo el propietario puede actualizar el equipo",
+    };
   }
 
   if (data.slug && data.slug !== team.slug) {
@@ -92,7 +96,10 @@ export async function deleteTeam(teamId: string, userId: string) {
   if (!team) throw { status: 404, message: "Equipo no encontrado" };
 
   if (team.ownerId.toString() !== userId) {
-    throw { status: 403, message: "Solo el propietario puede eliminar el equipo" };
+    throw {
+      status: 403,
+      message: "Solo el propietario puede eliminar el equipo",
+    };
   }
 
   await Promise.all([
@@ -117,6 +124,7 @@ export async function inviteMember(
   const memberRole = role;
 
   const targetUser = await User.findOne({ email });
+  
   if (targetUser) {
     const alreadyMember = await OrganizationMember.findOne({
       teamId,
@@ -197,7 +205,12 @@ export async function acceptInvitation(token: string, userId: string) {
   return { teamId: invitation.teamId };
 }
 
-export async function getTeamInvitations(teamId: string, userId: string) {
+export async function getTeamInvitations(
+  teamId: string,
+  userId: string,
+  page: number = 1,
+  limit: number = 10,
+) {
   const team = await Team.findById(teamId);
   if (!team) throw { status: 404, message: "Equipo no encontrado" };
 
@@ -213,12 +226,70 @@ export async function getTeamInvitations(teamId: string, userId: string) {
     };
   }
 
-  const invitations = await Invitation.find({ teamId }).sort({ createdAt: -1 });
+  const filter = { teamId, status: { $ne: "expired" } };
+  const skip = (page - 1) * limit;
 
-  return invitations;
+  const [invitations, total] = await Promise.all([
+    Invitation.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Invitation.countDocuments(filter),
+  ]);
+
+  return {
+    invitations,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
-export async function cancelInvitation(invitationId: string, userId: string) {
+export async function cancelInvitation(token: string, userId: string) {
+  const invitation = await Invitation.findOne({ token, status: "pending" });
+  if (!invitation) {
+    throw { status: 404, message: "Invitación no encontrada o ya expiró" };
+  }
+
+  if (invitation.expiresAt < new Date()) {
+    invitation.status = "expired";
+    await invitation.save();
+    throw { status: 410, message: "La invitación ha expirado" };
+  }
+
+  const user = await User.findById(userId);
+  if (!user) throw { status: 404, message: "Usuario no encontrado" };
+
+  if (user.email !== invitation.email) {
+    throw {
+      status: 403,
+      message: "Esta invitación no está dirigida a tu correo",
+    };
+  }
+
+  invitation.status = "cancelled";
+  await invitation.save();
+
+  return { teamId: invitation.teamId };
+}
+
+export async function getTeamMembers(teamId: string, userId: string) {
+  const team = await Team.findById(teamId);
+  if (!team) throw { status: 404, message: "Equipo no encontrado" };
+
+  const isMember = await OrganizationMember.findOne({ teamId, userId });
+  if (!isMember)
+    throw { status: 403, message: "No eres miembro de este equipo" };
+
+  const members = await OrganizationMember.find({ teamId })
+    .populate({
+      path: "userId",
+      select: "firstName lastName email",
+    })
+    .sort({ createdAt: -1 });
+
+  return members;
+}
+
+export async function deleteInvitation(invitationId: string, userId: string) {
   const invitation = await Invitation.findById(invitationId);
   if (!invitation) throw { status: 404, message: "Invitación no encontrada" };
 

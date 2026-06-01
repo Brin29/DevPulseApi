@@ -29,7 +29,7 @@ const InvitationSchema = new Schema<IInvitation, InvitationModel>(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "expired"],
+      enum: ["pending", "accepted", "expired", "cancelled"],
       default: "pending",
     },
     invitedBy: {

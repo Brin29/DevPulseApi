@@ -16,6 +16,8 @@ import {
   acceptInvitation,
   getTeamInvitations,
   cancelInvitation,
+  deleteInvitation,
+  getTeamMembers,
 } from "../services/team.service";
 
 export async function create(
@@ -33,10 +35,7 @@ export async function create(
   });
 }
 
-export async function list(
-  request: FastifyRequest,
-  reply: FastifyReply,
-) {
+export async function list(request: FastifyRequest, reply: FastifyReply) {
   const { id } = (request as any).user;
 
   const teams = await getTeams(id);
@@ -116,25 +115,54 @@ export async function accept(
 }
 
 export async function listInvitations(
+  request: FastifyRequest<GetTeamRequest & { Querystring: { page?: string; limit?: string } }>,
+  reply: FastifyReply,
+) {
+  const { id } = request.params;
+  const userId = (request as any).user.id;
+  const page = parseInt(request.query.page || "1", 10);
+  const limit = parseInt(request.query.limit || "10", 10);
+
+  const result = await getTeamInvitations(id, userId, page, limit);
+
+  return reply.send(result);
+}
+
+export async function listMembers(
   request: FastifyRequest<GetTeamRequest>,
   reply: FastifyReply,
 ) {
   const { id } = request.params;
   const userId = (request as any).user.id;
 
-  const invitations = await getTeamInvitations(id, userId);
-  
-  return reply.send({ invitations });
+  const members = await getTeamMembers(id, userId);
+
+  return reply.send({ members });
 }
 
 export async function cancel(
+  request: FastifyRequest<{ Params: { token: string } }>,
+  reply: FastifyReply,
+) {
+  const { token } = request.params;
+  const userId = (request as any).user.id;
+
+  const invitation = await cancelInvitation(token, userId);
+
+  return reply.send({
+    message: "Invitación cancelada exitosamente",
+    invitation,
+  });
+}
+
+export async function deleteInvt(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply,
 ) {
   const { id } = request.params;
   const userId = (request as any).user.id;
 
-  const invitation = await cancelInvitation(id, userId);
+  const invitation = await deleteInvitation(id, userId);
 
   return reply.send({
     message: "Invitación cancelada exitosamente",

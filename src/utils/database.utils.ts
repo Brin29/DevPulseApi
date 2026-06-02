@@ -1,8 +1,6 @@
-import { env } from "../env";
-
 const mongoose = require("mongoose");
 
-const mongoUri = env.MONGO_URI || 'mongodb://localhost/devpulse';
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost/devpulse';
 
 export async function connectDatabase(): Promise<void> {
   try {

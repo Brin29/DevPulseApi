@@ -118,6 +118,8 @@ const loginSchema = {
             id: { type: "string" },
             firstName: { type: "string" },
             lastName: { type: "string" },
+            avatar: { type: "string" },
+            provider: { type: "string" },
             email: { type: "string" },
             role: { type: "string" },
           },
@@ -482,13 +484,13 @@ const changeAvatarSchema = {
         user: {
           type: "object",
           properties: {
-            id:        { type: "string" },
+            id: { type: "string" },
             firstName: { type: "string" },
-            lastName:  { type: "string" },
-            avatar:    { type: "string" },
-            provider:  { type: "string" },
-            email:     { type: "string" },
-            role:      { type: "string" },
+            lastName: { type: "string" },
+            avatar: { type: "string" },
+            provider: { type: "string" },
+            email: { type: "string" },
+            role: { type: "string" },
           },
         },
       },
@@ -658,7 +660,11 @@ export default async function authRoutes(fastify: FastifyInstance) {
   );
   fastify.post(
     "/auth/avatar",
-    { schema: changeAvatarSchema, preHandler: authenticate, validatorCompiler: () => () => true, },
+    {
+      schema: changeAvatarSchema,
+      preHandler: authenticate,
+      validatorCompiler: () => () => true,
+    },
     changeAvatar,
   );
   fastify.get(

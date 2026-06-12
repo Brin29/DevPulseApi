@@ -129,6 +129,8 @@ export async function login(
       id: user._id,
       firstName: user.firstName,
       lastName: user.lastName,
+      avatar: user.avatar,
+      provider: user.provider,
       email: user.email,
       role: user.role,
     },

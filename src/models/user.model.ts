@@ -1,8 +1,10 @@
 export interface IUser {
   firstName: string;
-  lastName: string;
+  lastName?: string;
   email: string;
   role: string;
+  avatar: string;
+  provider: string;
   password: string;
   isVerified: boolean;
 }

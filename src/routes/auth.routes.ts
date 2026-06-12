@@ -9,11 +9,14 @@ import {
   checkEmail,
   magicLinkGenerate,
   refresh,
+  editProfile,
+  changeAvatar,
 } from "../controllers/auth.controller";
 import {
   authenticate,
   verifyVerificationToken,
 } from "../middlewares/auth.middleware";
+import { GoogleCallBack, GithubCallBack } from "../controllers/auth.controller";
 import rateLimit from "@fastify/rate-limit";
 import {
   CheckEmailRequest,
@@ -24,6 +27,7 @@ import {
   VerifyCodeRequestType,
   VerifyMagicTokenRequest,
   RefreshTokenRequest,
+  EditProfileRequest,
 } from "../types/auth.types";
 
 const registerSchema = {
@@ -145,6 +149,8 @@ const profileSchema = {
             id: { type: "string" },
             firstName: { type: "string" },
             lastName: { type: "string" },
+            avatar: { type: "string" },
+            provider: { type: "string" },
             email: { type: "string" },
             role: { type: "string" },
           },
@@ -397,6 +403,149 @@ const refreshTokenSchema = {
   },
 };
 
+const editProfileSchema = {
+  description: "Actualizar nombre y apellido del perfil",
+  tags: ["Auth"],
+  security: [{ bearerAuth: [] }],
+  body: {
+    type: "object",
+    required: ["data"],
+    properties: {
+      data: {
+        type: "object",
+        properties: {
+          firstName: { type: "string", description: "Nuevo nombre" },
+          lastName: { type: "string", description: "Nuevo apellido" },
+        },
+      },
+    },
+  },
+  response: {
+    200: {
+      description: "Perfil actualizado exitosamente",
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        user: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            firstName: { type: "string" },
+            lastName: { type: "string" },
+            avatar: { type: "string" },
+            provider: { type: "string" },
+            email: { type: "string" },
+            role: { type: "string" },
+          },
+        },
+      },
+    },
+    400: {
+      description: "Error de validación",
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+    401: {
+      description: "Token inválido o no proporcionado",
+      type: "object",
+      properties: {
+        error: { type: "string" },
+      },
+    },
+  },
+};
+
+const changeAvatarSchema = {
+  description: "Cambiar avatar del usuario autenticado",
+  tags: ["Auth"],
+  security: [{ bearerAuth: [] }],
+  consumes: ["multipart/form-data"],
+  body: {
+    type: "object",
+    required: ["avatar"],
+    properties: {
+      avatar: {
+        type: "string",
+        format: "binary",
+        description: "Archivo de imagen (jpeg, png, webp, gif – máx 5MB)",
+      },
+    },
+  },
+  response: {
+    200: {
+      description: "Avatar actualizado exitosamente",
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        user: {
+          type: "object",
+          properties: {
+            id:        { type: "string" },
+            firstName: { type: "string" },
+            lastName:  { type: "string" },
+            avatar:    { type: "string" },
+            provider:  { type: "string" },
+            email:     { type: "string" },
+            role:      { type: "string" },
+          },
+        },
+      },
+    },
+    400: {
+      description: "Error de validación o archivo inválido",
+      type: "object",
+      properties: { error: { type: "string" } },
+    },
+    401: {
+      description: "Token inválido o no proporcionado",
+      type: "object",
+      properties: { error: { type: "string" } },
+    },
+  },
+};
+
+const googleCallbackSchema = {
+  description: "Callback de autenticación con Google OAuth2",
+  tags: ["Auth"],
+  querystring: {
+    type: "object",
+    properties: {
+      code: { type: "string", description: "Código de autorización de Google" },
+      scope: { type: "string", description: "Scopes autorizados" },
+      authuser: { type: "string", description: "Usuario de Google" },
+      prompt: { type: "string", description: "Prompt de consentimiento" },
+    },
+    required: ["code"],
+  },
+  response: {
+    302: {
+      type: "string",
+      description: "Redirección al frontend con tokens",
+    },
+  },
+};
+
+const githubCallbackSchema = {
+  description: "Callback de autenticación con GitHub OAuth2",
+  tags: ["Auth"],
+  querystring: {
+    type: "object",
+    properties: {
+      code: { type: "string", description: "Código de autorización de GitHub" },
+      scope: { type: "string", description: "Scopes autorizados" },
+    },
+    required: ["code"],
+  },
+  response: {
+    302: {
+      type: "string",
+      description: "Redirección al frontend con tokens",
+    },
+  },
+};
+
 const verifyMagicTokenSchema = {
   description: "Verificar token mágico para acceso directo",
   tags: ["Auth"],
@@ -501,5 +650,25 @@ export default async function authRoutes(fastify: FastifyInstance) {
     "/auth/profile",
     { schema: profileSchema, preHandler: authenticate },
     getProfile,
+  );
+  fastify.patch<EditProfileRequest>(
+    "/auth/profile",
+    { schema: editProfileSchema, preHandler: authenticate },
+    editProfile,
+  );
+  fastify.post(
+    "/auth/avatar",
+    { schema: changeAvatarSchema, preHandler: authenticate, validatorCompiler: () => () => true, },
+    changeAvatar,
+  );
+  fastify.get(
+    "/auth/google/callback",
+    { schema: googleCallbackSchema },
+    GoogleCallBack,
+  );
+  fastify.get(
+    "/auth/github/callback",
+    { schema: githubCallbackSchema },
+    GithubCallBack,
   );
 }

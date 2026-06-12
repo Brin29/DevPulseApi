@@ -4,6 +4,12 @@ export interface RegisterModel {
   password: string;
 }
 
+export enum OauthModel {
+  LOCAL = "local",
+  GOOGLE = "google",
+  GITHUB = "github",
+}
+
 export interface LoginModel {
   email: string;
   password: string;

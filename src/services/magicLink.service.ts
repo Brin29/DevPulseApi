@@ -25,7 +25,7 @@ export async function generateMagicLink(email: string) {
 
   await magicLink.save();
 
-  const frontendUrl = env.FRONTEND_URL || "http://localhost:3000";
+  const frontendUrl = env.FRONTEND_URL;
   const link = `${frontendUrl}/magic-login?token=${rawToken}`;
 
   await EmailService.sendMagicLinkEmail(

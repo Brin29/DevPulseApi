@@ -1,10 +1,13 @@
 import Fastify from "fastify";
-import cors from "@fastify/cors";
 import { connectDatabase } from "./utils/database.utils";
 import { registerSwagger } from "./utils/swagger.utils";
 import authRoutes from "./routes/auth.routes";
 import teamRoutes from "./routes/team.routes";
 import taskRoutes from "./routes/task.routes";
+import cors from "./plugins/cors";
+import googleOAuth from "./plugins/googleOAuth";
+import githubOAuth from "./plugins/githubOAuth";
+import multipart from "./plugins/multipart";
 
 const fastify = Fastify({ logger: true });
 
@@ -19,11 +22,10 @@ const start = async () => {
   try {
     await connectDatabase();
     await registerSwagger(fastify);
-    await fastify.register(cors, {
-      origin: ["http://localhost:5173", "https://dev-pulse-front.vercel.app"],
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    });
+    await fastify.register(cors);
+    await fastify.register(googleOAuth);
+    await fastify.register(githubOAuth);
+    await fastify.register(multipart);
     await fastify.register(authRoutes);
     await fastify.register(teamRoutes);
     await fastify.register(taskRoutes);

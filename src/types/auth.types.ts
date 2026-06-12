@@ -9,6 +9,10 @@ export interface RegisterRequest {
   Body: Request<RegisterModel>;
 }
 
+// export interface GoogleCallBack{
+//   Body: Request<>
+// }
+
 export interface LoginRequest {
   Body: Request<LoginModel>;
 }
@@ -37,5 +41,8 @@ export interface RefreshTokenRequest {
   Body: Request<{ refresh_token: string }>;
 }
 
+export interface EditProfileRequest {
+  Body: Request<{ firstName?: string; lastName?: string, avatarUrl?: string }>;
+}
 
 // GetProfile has no body, so no type needed (or we could define empty)

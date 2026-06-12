@@ -12,8 +12,7 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
   },
   lastName: {
     type: String,
-    required: true,
-    trim: true,
+    required: false,
   },
   email: {
     type: String,
@@ -21,6 +20,14 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>({
     trim: true,
     unique: true,
     lowercase: true,
+  },
+  provider: {
+    type: String,
+    enum: ['local', 'google', 'github'],
+    default: "local"
+  },
+  avatar: {
+    type: String,
   },
   role: {
     type: String,

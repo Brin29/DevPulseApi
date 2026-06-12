@@ -31,12 +31,12 @@ export async function loginWithGoogle(googleUser: {
   family_name: string;
   picture: string;
 }) {
-  const user = await User.findOne({
+  let user = await User.findOne({
     email: googleUser.email,
   });
 
   if (!user) {
-    const newUser = await new User({
+    user = await User.create({
       firstName: googleUser.given_name,
       lastName: googleUser.family_name || "",
       email: googleUser.email,
@@ -45,8 +45,7 @@ export async function loginWithGoogle(googleUser: {
       avatar: googleUser.picture,
       isVerified: true,
     });
-
-    await newUser.save();
+    
   }
 
   return { tokens: generateTokens(user), user };

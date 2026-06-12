@@ -61,9 +61,9 @@ export async function update(
 ) {
   const { id } = request.params;
   const userId = (request as any).user.id;
-  const { name, description, slug, logo } = request.body.data;
+  const { name, description, slug } = request.body.data;
 
-  const team = await updateTeam(id, { name, slug, logo }, userId);
+  const team = await updateTeam(id, { name, description, slug,  }, userId);
 
   return reply.send({
     message: "Equipo actualizado exitosamente",

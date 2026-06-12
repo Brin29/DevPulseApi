@@ -67,7 +67,7 @@ export async function getTeamById(teamId: string, userId: string) {
 
 export async function updateTeam(
   teamId: string,
-  data: { name?: string; slug?: string; logo?: string },
+  data: { name?: string; description?: string; slug?: string },
   userId: string,
 ) {
   const team = await Team.findById(teamId);
@@ -124,7 +124,7 @@ export async function inviteMember(
   const memberRole = role;
 
   const targetUser = await User.findOne({ email });
-  
+
   if (targetUser) {
     const alreadyMember = await OrganizationMember.findOne({
       teamId,

@@ -7,5 +7,7 @@ export default fp(async (fastify) => {
     origin: [env.FRONTEND_URL!!, "http://localhost:5173"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    maxAge: 86400,   
   });
 });

@@ -21,9 +21,9 @@ fastify.setErrorHandler((error: any, _, reply) => {
 
 const start = async () => {
   try {
+    await fastify.register(cors);
     await connectDatabase();
     await registerSwagger(fastify);
-    await fastify.register(cors);
     await fastify.register(helmet);
     await fastify.register(googleOAuth);
     await fastify.register(githubOAuth);

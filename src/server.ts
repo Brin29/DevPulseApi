@@ -8,6 +8,7 @@ import cors from "./plugins/cors";
 import googleOAuth from "./plugins/googleOAuth";
 import githubOAuth from "./plugins/githubOAuth";
 import multipart from "./plugins/multipart";
+import helmet from "./plugins/helmet";
 
 const fastify = Fastify({ logger: true });
 
@@ -23,6 +24,7 @@ const start = async () => {
     await connectDatabase();
     await registerSwagger(fastify);
     await fastify.register(cors);
+    await fastify.register(helmet);
     await fastify.register(googleOAuth);
     await fastify.register(githubOAuth);
     await fastify.register(multipart);

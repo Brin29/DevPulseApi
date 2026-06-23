@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.routes";
 import teamRoutes from "./routes/team.routes";
 import taskRoutes from "./routes/task.routes";
 import reportRoutes from "./routes/report.routes";
+import userRoutes from "./routes/user.routes";
 import cors from "./plugins/cors";
 import googleOAuth from "./plugins/googleOAuth";
 import githubOAuth from "./plugins/githubOAuth";
@@ -33,6 +34,7 @@ const start = async () => {
     await fastify.register(teamRoutes);
     await fastify.register(taskRoutes);
     await fastify.register(reportRoutes);
+    await fastify.register(userRoutes);
     await fastify.listen({
       port: Number(process.env.PORT) || 3000,
       host: "0.0.0.0",
